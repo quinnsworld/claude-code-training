@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest"
-import { canTransitionStatus, generateTestCardNumber, isValidLuhn } from "./cards"
+import {
+  canTransitionStatus,
+  generateTestCardNumber,
+  isValidLuhn,
+} from "./cards"
 
 describe("virtual card rules", () => {
   it("generates a valid 4242 test number", () => {

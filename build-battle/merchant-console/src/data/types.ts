@@ -1,11 +1,7 @@
 export type Currency = "USD" | "EUR" | "GBP"
 
 export type PaymentStatus =
-  | "authorized"
-  | "captured"
-  | "refunded"
-  | "failed"
-  | "disputed"
+  "authorized" | "captured" | "refunded" | "failed" | "disputed"
 
 export type DisputeStatus = "needs_response" | "under_review" | "won" | "lost"
 

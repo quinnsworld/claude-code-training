@@ -1,4 +1,9 @@
-import { generateTestCardNumber, isCardCategory, safeCard, validateCardInput } from "@/data/cards"
+import {
+  generateTestCardNumber,
+  isCardCategory,
+  safeCard,
+  validateCardInput,
+} from "@/data/cards"
 import { merchantById } from "@/data/merchants"
 import { store } from "@/data/store"
 import { Currency } from "@/data/types"
@@ -12,11 +17,15 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const body = (await request.json().catch(() => null)) as Record<string, unknown> | null
+  const body = (await request.json().catch(() => null)) as Record<
+    string,
+    unknown
+  > | null
   const idempotencyKey = request.headers.get("idempotency-key")?.trim()
   if (idempotencyKey) {
     const previous = recentIssues.get(idempotencyKey)
-    if (previous && Date.now() - previous.createdAt < IDEMPOTENCY_TTL_MS) return NextResponse.json(previous.response, { status: 201 })
+    if (previous && Date.now() - previous.createdAt < IDEMPOTENCY_TTL_MS)
+      return NextResponse.json(previous.response, { status: 201 })
     recentIssues.delete(idempotencyKey)
   }
   const input = {
@@ -29,9 +38,23 @@ export async function POST(request: Request) {
   const error = validateCardInput(input)
   if (error) return NextResponse.json({ message: error }, { status: 400 })
   const merchant = merchantById(input.merchantId as string)
-  if (!merchant) return NextResponse.json({ message: "Merchant was not found" }, { status: 400 })
-  if (merchant.currency !== input.currency) return NextResponse.json({ message: `Currency must match the merchant settlement currency (${merchant.currency})` }, { status: 400 })
-  if (!isCardCategory(input.merchantCategory)) return NextResponse.json({ message: "Merchant category is required" }, { status: 400 })
+  if (!merchant)
+    return NextResponse.json(
+      { message: "Merchant was not found" },
+      { status: 400 },
+    )
+  if (merchant.currency !== input.currency)
+    return NextResponse.json(
+      {
+        message: `Currency must match the merchant settlement currency (${merchant.currency})`,
+      },
+      { status: 400 },
+    )
+  if (!isCardCategory(input.merchantCategory))
+    return NextResponse.json(
+      { message: "Merchant category is required" },
+      { status: 400 },
+    )
 
   const fullNumber = generateTestCardNumber()
   const now = new Date().toISOString()
@@ -51,6 +74,7 @@ export async function POST(request: Request) {
   }
   store.cards.unshift(card)
   const response = { card: safeCard(card), fullNumber }
-  if (idempotencyKey) recentIssues.set(idempotencyKey, { createdAt: Date.now(), response })
+  if (idempotencyKey)
+    recentIssues.set(idempotencyKey, { createdAt: Date.now(), response })
   return NextResponse.json(response, { status: 201 })
 }

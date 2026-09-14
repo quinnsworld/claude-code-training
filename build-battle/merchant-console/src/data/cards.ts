@@ -1,7 +1,13 @@
 import { Currency, VirtualCard, VirtualCardStatus } from "./types"
 
 export const MAX_LIMIT_MINOR_UNITS = 5_000_000
-export const CARD_CATEGORIES = ["advertising", "software", "travel", "supplies", "other"] as const
+export const CARD_CATEGORIES = [
+  "advertising",
+  "software",
+  "travel",
+  "supplies",
+  "other",
+] as const
 export type CardCategory = (typeof CARD_CATEGORIES)[number]
 const CURRENCIES: Currency[] = ["USD", "EUR", "GBP"]
 
@@ -10,7 +16,9 @@ export function isCurrency(value: unknown): value is Currency {
 }
 
 export function isCardCategory(value: unknown): value is CardCategory {
-  return typeof value === "string" && CARD_CATEGORIES.includes(value as CardCategory)
+  return (
+    typeof value === "string" && CARD_CATEGORIES.includes(value as CardCategory)
+  )
 }
 
 export function validateCardInput(input: {
@@ -20,19 +28,33 @@ export function validateCardInput(input: {
   currency?: unknown
   merchantCategory?: unknown
 }): string | null {
-  if (typeof input.nickname !== "string" || !input.nickname.trim()) return "Nickname is required"
-  if (typeof input.merchantId !== "string" || !input.merchantId.trim()) return "Merchant is required"
-  if (!Number.isSafeInteger(input.limitMinorUnits) || (input.limitMinorUnits as number) <= 0) return "Spend limit must be a positive integer in minor units"
-  if ((input.limitMinorUnits as number) > MAX_LIMIT_MINOR_UNITS) return "Spend limit cannot exceed 5,000,000 minor units"
+  if (typeof input.nickname !== "string" || !input.nickname.trim())
+    return "Nickname is required"
+  if (typeof input.merchantId !== "string" || !input.merchantId.trim())
+    return "Merchant is required"
+  if (
+    !Number.isSafeInteger(input.limitMinorUnits) ||
+    (input.limitMinorUnits as number) <= 0
+  )
+    return "Spend limit must be a positive integer in minor units"
+  if ((input.limitMinorUnits as number) > MAX_LIMIT_MINOR_UNITS)
+    return "Spend limit cannot exceed 5,000,000 minor units"
   if (!isCurrency(input.currency)) return "Currency must be USD, EUR, or GBP"
-  if (!isCardCategory(input.merchantCategory)) return "Merchant category is required"
+  if (!isCardCategory(input.merchantCategory))
+    return "Merchant category is required"
   return null
 }
 
-export function canTransitionStatus(from: VirtualCardStatus, to: VirtualCardStatus): boolean {
+export function canTransitionStatus(
+  from: VirtualCardStatus,
+  to: VirtualCardStatus,
+): boolean {
   if (from === "cancelled") return false
   if (to === "cancelled") return true
-  return (from === "active" && to === "frozen") || (from === "frozen" && to === "active")
+  return (
+    (from === "active" && to === "frozen") ||
+    (from === "frozen" && to === "active")
+  )
 }
 
 export function maskCard(last4: string): string {
@@ -40,8 +62,35 @@ export function maskCard(last4: string): string {
 }
 
 export function safeCard(card: VirtualCard) {
-  const { id, nickname, merchantId, merchantCategory, limitMinorUnits, currency, status, createdAt, spendMinorUnits, last4, cardReference, statusHistory } = card
-  return { id, nickname, merchantId, merchantCategory, limitMinorUnits, currency, status, createdAt, spendMinorUnits, last4, cardReference, statusHistory, maskedNumber: maskCard(last4) }
+  const {
+    id,
+    nickname,
+    merchantId,
+    merchantCategory,
+    limitMinorUnits,
+    currency,
+    status,
+    createdAt,
+    spendMinorUnits,
+    last4,
+    cardReference,
+    statusHistory,
+  } = card
+  return {
+    id,
+    nickname,
+    merchantId,
+    merchantCategory,
+    limitMinorUnits,
+    currency,
+    status,
+    createdAt,
+    spendMinorUnits,
+    last4,
+    cardReference,
+    statusHistory,
+    maskedNumber: maskCard(last4),
+  }
 }
 
 function luhnCheckDigit(prefix: string): number {
