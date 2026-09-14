@@ -18,7 +18,7 @@ Add `VirtualCard` and status types. Store only a generated reference and `last4`
 - Add `POST /api/cards` to validate nickname, merchant, integer minor-unit limit (positive and <= 5,000,000), and USD/EUR/GBP currency. It creates a card, stores only safe fields, and returns the full generated number only in that response.
 - Add `GET /api/cards` returning safe card records.
 - Add `GET /api/cards/:id` returning one safe card record.
-- Add `PATCH /api/cards/:id/status` validating the state machine and returning the safe card.
+- Add `PATCH /api/cards/:id` validating the state machine and returning the safe card.
 - Use consistent JSON `{ message }` errors and appropriate 4xx statuses.
 
 ## UI
