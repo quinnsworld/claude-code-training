@@ -4,7 +4,7 @@ import { Button } from "@/components/Button"
 import { Input } from "@/components/Input"
 import { merchantById, merchants } from "@/data/merchants"
 import { formatDate } from "@/lib/dates"
-import { formatMoney } from "@/lib/money"
+import { formatMoney, parseAmountToMinorUnits } from "@/lib/money"
 import Link from "next/link"
 import { FormEvent, useEffect, useState } from "react"
 
@@ -49,7 +49,7 @@ export function CardsClient() {
     const response = await fetch("/api/cards", {
       method: "POST",
       headers: { "content-type": "application/json", "idempotency-key": crypto.randomUUID() },
-      body: JSON.stringify({ nickname, merchantId, limitMinorUnits: Math.round(Number(limit) * 100), currency, merchantCategory }),
+      body: JSON.stringify({ nickname, merchantId, limitMinorUnits: parseAmountToMinorUnits(limit), currency, merchantCategory }),
     })
     const body = await response.json()
     setLoading(false)
@@ -85,9 +85,9 @@ export function CardsClient() {
     {reveal && <div role="status" className="mb-6 rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-950"><p className="font-semibold">Card issued. Reveal this number now—it will not be shown again.</p><p className="mt-2 font-mono text-lg tracking-widest">{reveal}</p><Button className="mt-3" variant="secondary" onClick={() => setReveal(null)}>Close reveal</Button></div>}
     <form id="issue-card" onSubmit={issueCard} className="mb-8 grid gap-4 rounded-lg border border-gray-200 p-4 dark:border-gray-800 sm:grid-cols-2 lg:grid-cols-5">
       <label className="text-sm font-medium">Nickname<Input required value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="Ad spend card" /></label>
-      <label className="text-sm font-medium">Merchant<select className="mt-2 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-800 dark:bg-gray-950" value={merchantId} onChange={(e) => setMerchantId(e.target.value)}>{merchants.map((merchant) => <option key={merchant.id} value={merchant.id}>{merchant.name}</option>)}</select></label>
+      <label className="text-sm font-medium">Merchant<select className="mt-2 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-800 dark:bg-gray-950" value={merchantId} onChange={(e) => { const nextMerchant = e.target.value; setMerchantId(nextMerchant); setCurrency(merchantById(nextMerchant)?.currency ?? "USD") }}>{merchants.map((merchant) => <option key={merchant.id} value={merchant.id}>{merchant.name}</option>)}</select></label>
       <label className="text-sm font-medium">Spend limit<Input required min="0.01" step="0.01" type="number" value={limit} onChange={(e) => setLimit(e.target.value)} placeholder="250.00" /></label>
-      <label className="text-sm font-medium">Currency<select className="mt-2 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-800 dark:bg-gray-950" value={currency} onChange={(e) => setCurrency(e.target.value as typeof currency)}><option>USD</option><option>EUR</option><option>GBP</option></select></label>
+      <label className="text-sm font-medium">Currency<select className="mt-2 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-800 dark:bg-gray-950" value={currency} onChange={(e) => setCurrency(e.target.value as typeof currency)}><option value={merchantById(merchantId)?.currency}>{merchantById(merchantId)?.currency}</option></select></label>
       <label className="text-sm font-medium">Category<select className="mt-2 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-800 dark:bg-gray-950" value={merchantCategory} onChange={(e) => setMerchantCategory(e.target.value)}><option value="software">Software</option><option value="advertising">Advertising</option><option value="travel">Travel</option><option value="supplies">Supplies</option><option value="other">Other</option></select></label>
       <div className="flex items-end"><Button type="submit" isLoading={loading} className="w-full">Create card</Button></div>
       {error && <p role="alert" className="text-sm text-red-600 sm:col-span-2 lg:col-span-5">{error}</p>}
