@@ -11,6 +11,21 @@ export type DisputeStatus = "needs_response" | "under_review" | "won" | "lost"
 
 export type PayoutStatus = "paid" | "in_transit" | "pending"
 
+export type VirtualCardStatus = "active" | "frozen" | "cancelled"
+
+export interface VirtualCard {
+  id: string
+  nickname: string
+  merchantId: string
+  limitMinorUnits: number
+  currency: Currency
+  status: VirtualCardStatus
+  createdAt: string
+  spendMinorUnits: number
+  last4: string
+  cardReference: string
+}
+
 export interface Merchant {
   id: string
   name: string
