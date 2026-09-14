@@ -13,10 +13,16 @@ export type PayoutStatus = "paid" | "in_transit" | "pending"
 
 export type VirtualCardStatus = "active" | "frozen" | "cancelled"
 
+export interface VirtualCardStatusEvent {
+  status: VirtualCardStatus
+  changedAt: string
+}
+
 export interface VirtualCard {
   id: string
   nickname: string
   merchantId: string
+  merchantCategory: string
   limitMinorUnits: number
   currency: Currency
   status: VirtualCardStatus
@@ -24,6 +30,7 @@ export interface VirtualCard {
   spendMinorUnits: number
   last4: string
   cardReference: string
+  statusHistory: VirtualCardStatusEvent[]
 }
 
 export interface Merchant {

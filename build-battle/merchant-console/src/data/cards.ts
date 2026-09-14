@@ -1,10 +1,16 @@
 import { Currency, VirtualCard, VirtualCardStatus } from "./types"
 
-const MAX_LIMIT_MINOR_UNITS = 5_000_000
+export const MAX_LIMIT_MINOR_UNITS = 5_000_000
+export const CARD_CATEGORIES = ["advertising", "software", "travel", "supplies", "other"] as const
+export type CardCategory = (typeof CARD_CATEGORIES)[number]
 const CURRENCIES: Currency[] = ["USD", "EUR", "GBP"]
 
 export function isCurrency(value: unknown): value is Currency {
   return typeof value === "string" && CURRENCIES.includes(value as Currency)
+}
+
+export function isCardCategory(value: unknown): value is CardCategory {
+  return typeof value === "string" && CARD_CATEGORIES.includes(value as CardCategory)
 }
 
 export function validateCardInput(input: {
@@ -12,16 +18,14 @@ export function validateCardInput(input: {
   merchantId?: unknown
   limitMinorUnits?: unknown
   currency?: unknown
+  merchantCategory?: unknown
 }): string | null {
   if (typeof input.nickname !== "string" || !input.nickname.trim()) return "Nickname is required"
   if (typeof input.merchantId !== "string" || !input.merchantId.trim()) return "Merchant is required"
-  if (!Number.isSafeInteger(input.limitMinorUnits) || (input.limitMinorUnits as number) <= 0) {
-    return "Spend limit must be a positive integer in minor units"
-  }
-  if ((input.limitMinorUnits as number) > MAX_LIMIT_MINOR_UNITS) {
-    return "Spend limit cannot exceed 5,000,000 minor units"
-  }
+  if (!Number.isSafeInteger(input.limitMinorUnits) || (input.limitMinorUnits as number) <= 0) return "Spend limit must be a positive integer in minor units"
+  if ((input.limitMinorUnits as number) > MAX_LIMIT_MINOR_UNITS) return "Spend limit cannot exceed 5,000,000 minor units"
   if (!isCurrency(input.currency)) return "Currency must be USD, EUR, or GBP"
+  if (!isCardCategory(input.merchantCategory)) return "Merchant category is required"
   return null
 }
 
@@ -36,8 +40,8 @@ export function maskCard(last4: string): string {
 }
 
 export function safeCard(card: VirtualCard) {
-  const { id, nickname, merchantId, limitMinorUnits, currency, status, createdAt, spendMinorUnits, last4, cardReference } = card
-  return { id, nickname, merchantId, limitMinorUnits, currency, status, createdAt, spendMinorUnits, last4, cardReference, maskedNumber: maskCard(last4) }
+  const { id, nickname, merchantId, merchantCategory, limitMinorUnits, currency, status, createdAt, spendMinorUnits, last4, cardReference, statusHistory } = card
+  return { id, nickname, merchantId, merchantCategory, limitMinorUnits, currency, status, createdAt, spendMinorUnits, last4, cardReference, statusHistory, maskedNumber: maskCard(last4) }
 }
 
 function luhnCheckDigit(prefix: string): number {
@@ -73,5 +77,3 @@ export function isValidLuhn(number: string): boolean {
   }
   return sum % 10 === 0
 }
-
-export { MAX_LIMIT_MINOR_UNITS }
