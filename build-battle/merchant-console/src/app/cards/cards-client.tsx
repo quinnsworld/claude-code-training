@@ -34,6 +34,7 @@ export function CardsClient() {
   const [cancelTarget, setCancelTarget] = useState<Card | null>(null)
   const cancelDialogRef = useRef<HTMLDivElement>(null)
   const cancelTriggerRef = useRef<HTMLButtonElement>(null)
+  const idempotencyKeyRef = useRef(crypto.randomUUID())
   const [reveal, setReveal] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -81,7 +82,7 @@ export function CardsClient() {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "idempotency-key": crypto.randomUUID(),
+        "idempotency-key": idempotencyKeyRef.current,
       },
       body: JSON.stringify({
         nickname,
@@ -99,6 +100,7 @@ export function CardsClient() {
     }
     setCards((current) => [body.card, ...current])
     setReveal(body.fullNumber)
+    idempotencyKeyRef.current = crypto.randomUUID()
     setNickname("")
     setLimit("")
   }
@@ -214,15 +216,14 @@ export function CardsClient() {
         </label>
         <label className="text-sm font-medium">
           Currency
-          <select
-            className="mt-2 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-800 dark:bg-gray-950"
+          <Input
+            aria-label="Merchant settlement currency"
             value={currency}
-            onChange={(e) => setCurrency(e.target.value as typeof currency)}
-          >
-            <option value={merchantById(merchantId)?.currency}>
-              {merchantById(merchantId)?.currency}
-            </option>
-          </select>
+            readOnly
+          />
+          <span className="mt-1 block text-xs font-normal text-gray-500">
+            Set by the merchant
+          </span>
         </label>
         <label className="text-sm font-medium">
           Category
