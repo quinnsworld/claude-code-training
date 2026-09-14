@@ -33,7 +33,8 @@ export function CardsClient() {
   const [error, setError] = useState("")
   const [cancelTarget, setCancelTarget] = useState<Card | null>(null)
   const cancelDialogRef = useRef<HTMLDivElement>(null)
-  const cancelTriggerRef = useRef<HTMLButtonElement>(null)
+  const cancelTriggerRefs = useRef(new Map<string, HTMLButtonElement>())
+  const lastCancelTriggerIdRef = useRef<string | null>(null)
   const idempotencyKeyRef = useRef(crypto.randomUUID())
   const [reveal, setReveal] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -49,7 +50,8 @@ export function CardsClient() {
 
   useEffect(() => {
     if (!cancelTarget) {
-      cancelTriggerRef.current?.focus()
+      if (lastCancelTriggerIdRef.current)
+        cancelTriggerRefs.current.get(lastCancelTriggerIdRef.current)?.focus()
       return
     }
     cancelDialogRef.current?.focus()
@@ -323,10 +325,17 @@ export function CardsClient() {
                         {card.status === "active" ? "Freeze" : "Unfreeze"}
                       </Button>
                       <Button
-                        ref={cancelTriggerRef}
+                        ref={(element) => {
+                          if (element)
+                            cancelTriggerRefs.current.set(card.id, element)
+                          else cancelTriggerRefs.current.delete(card.id)
+                        }}
                         variant="secondary"
                         className="py-1 text-red-600"
-                        onClick={() => setCancelTarget(card)}
+                        onClick={() => {
+                          lastCancelTriggerIdRef.current = card.id
+                          setCancelTarget(card)
+                        }}
                       >
                         Cancel
                       </Button>

@@ -12,6 +12,12 @@ import { NextResponse } from "next/server"
 const IDEMPOTENCY_TTL_MS = 5 * 60 * 1000
 const recentIssues = new Map<string, { createdAt: number; response: unknown }>()
 
+function pruneRecentIssues(now: number) {
+  for (const [key, entry] of recentIssues) {
+    if (now - entry.createdAt >= IDEMPOTENCY_TTL_MS) recentIssues.delete(key)
+  }
+}
+
 export async function GET() {
   return NextResponse.json(store.cards.map(safeCard))
 }
@@ -22,6 +28,7 @@ export async function POST(request: Request) {
     unknown
   > | null
   const idempotencyKey = request.headers.get("idempotency-key")?.trim()
+  pruneRecentIssues(Date.now())
   if (idempotencyKey) {
     const previous = recentIssues.get(idempotencyKey)
     if (previous && Date.now() - previous.createdAt < IDEMPOTENCY_TTL_MS)
