@@ -6,7 +6,7 @@ import { merchantById, merchants } from "@/data/merchants"
 import { formatDate } from "@/lib/dates"
 import { formatMoney, parseAmountToMinorUnits } from "@/lib/money"
 import Link from "next/link"
-import { FormEvent, useEffect, useState } from "react"
+import { FormEvent, useEffect, useRef, useState } from "react"
 
 type Card = {
   id: string
@@ -32,6 +32,8 @@ export function CardsClient() {
   const [merchantCategory, setMerchantCategory] = useState("software")
   const [error, setError] = useState("")
   const [cancelTarget, setCancelTarget] = useState<Card | null>(null)
+  const cancelDialogRef = useRef<HTMLDivElement>(null)
+  const cancelTriggerRef = useRef<HTMLButtonElement>(null)
   const [reveal, setReveal] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -43,6 +45,33 @@ export function CardsClient() {
   useEffect(() => {
     void loadCards()
   }, [])
+
+  useEffect(() => {
+    if (!cancelTarget) {
+      cancelTriggerRef.current?.focus()
+      return
+    }
+    cancelDialogRef.current?.focus()
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setCancelTarget(null)
+      if (event.key !== "Tab" || !cancelDialogRef.current) return
+      const focusable = Array.from(
+        cancelDialogRef.current.querySelectorAll<HTMLElement>("button"),
+      )
+      if (!focusable.length) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+    document.addEventListener("keydown", onKeyDown)
+    return () => document.removeEventListener("keydown", onKeyDown)
+  }, [cancelTarget])
 
   async function issueCard(event: FormEvent) {
     event.preventDefault()
@@ -293,6 +322,7 @@ export function CardsClient() {
                         {card.status === "active" ? "Freeze" : "Unfreeze"}
                       </Button>
                       <Button
+                        ref={cancelTriggerRef}
                         variant="secondary"
                         className="py-1 text-red-600"
                         onClick={() => setCancelTarget(card)}
@@ -314,7 +344,11 @@ export function CardsClient() {
           aria-labelledby="cancel-title"
           className="fixed inset-0 z-20 flex items-center justify-center bg-black/30 p-4"
         >
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-gray-950">
+          <div
+            ref={cancelDialogRef}
+            tabIndex={-1}
+            className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl outline-none dark:bg-gray-950"
+          >
             <h2 id="cancel-title" className="text-lg font-semibold">
               Cancel {cancelTarget.nickname}?
             </h2>
